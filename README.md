@@ -31,14 +31,14 @@ _TODO_
 | Model | Validation F2 | Kaggle public | Kaggle private |
 | ----- | ------------- | ------------- | -------------- |
 | B0    |               |               |                |
-| B1    |               |               |                |
+| B1    |               | 0.01043       | 0.00801        |
 | B2    |               |               |                |
 
 ## Kaggle submission history
 
-| Date | Method | Public score | Private score | Notes |
-| ---- | ------ | ------------ | ------------- | ----- |
-|      |        |              |               |       |
+| Date       | Method                       | Public score | Private score | Notes                                                                          |
+| ---------- | ---------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------ |
+| 2026-11-02 | B1: mean normalized position | 0.01043      | 0.00801       | Every tomogram predicted as positive; almost no prediction falls within 1000 Å |
 
 ## How to run
 
@@ -75,6 +75,7 @@ GROUP10_CENG313/
 
 ## Progress log
 
-| Date       | Member | Work                                          |
-| ---------- | ------ | --------------------------------------------- |
-| 2026-11-02 | Yasin  | Repository created, initial project structure |
+| Date       | Member | Work                                                                |
+| ---------- | ------ | ------------------------------------------------------------------- |
+| 2026-11-02 | Yasin  | Repository created, initial project structure                       |
+| 2026-11-02 | Yasin  | First Kaggle late submission (B1); fixed data folder path on Kaggle |
