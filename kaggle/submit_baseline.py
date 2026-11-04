@@ -18,8 +18,28 @@ from PIL import Image
 
 METHOD = "B1"  # "B0" = always no motor, "B1" = mean normalized position
 
-DATA = Path("/kaggle/input/byu-locating-bacterial-flagellar-motors-2025")
 OUT = Path("/kaggle/working/submission.csv")
+
+
+def find_data_dir(root=Path("/kaggle/input")):
+    """Locate the competition folder by searching for train_labels.csv.
+
+    Kaggle's mount path for competition data is not always the same, so we
+    search a few levels deep instead of hard-coding it.
+    """
+    for pattern in ("train_labels.csv", "*/train_labels.csv", "*/*/train_labels.csv", "*/*/*/train_labels.csv"):
+        hits = sorted(root.glob(pattern))
+        if hits:
+            return hits[0].parent
+    # Not found: show what is there so the error is easy to fix.
+    for p in sorted(root.glob("*")) + sorted(root.glob("*/*")):
+        print(p)
+    raise FileNotFoundError(f"train_labels.csv not found under {root}")
+
+
+DATA = find_data_dir()
+print("Competition data folder:", DATA)
+print("Contents:", sorted(p.name for p in DATA.iterdir()))
 
 
 def tomogram_shape(tomo_dir):

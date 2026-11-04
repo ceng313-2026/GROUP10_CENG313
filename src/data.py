@@ -27,7 +27,18 @@ LABEL_COLUMNS = {
     "Number of motors": "n_motors",
 }
 
-KAGGLE_DATA_DIR = Path("/kaggle/input/byu-locating-bacterial-flagellar-motors-2025")
+def find_data_dir(root="/kaggle/input"):
+    """Locate the competition folder on Kaggle by searching for train_labels.csv.
+
+    Kaggle's mount path for competition data is not always the same,
+    so we search a few levels deep instead of hard-coding it.
+    """
+    root = Path(root)
+    for pattern in ("train_labels.csv", "*/train_labels.csv", "*/*/train_labels.csv", "*/*/*/train_labels.csv"):
+        hits = sorted(root.glob(pattern))
+        if hits:
+            return hits[0].parent
+    raise FileNotFoundError(f"train_labels.csv not found under {root}")
 
 
 def load_labels(csv_path):
