@@ -42,6 +42,7 @@ _TODO_
 
 ## How to run
 
+0. One-time setup (the repository is private): create a GitHub token at GitHub → Settings → Developer settings → Personal access tokens → **Tokens (classic)** with the `repo` scope. In Colab, open Secrets (key icon on the left), add it as `GITHUB_TOKEN` and turn on notebook access. Never paste the token into a notebook cell.
 1. Open `assignment1_eda_baseline.ipynb` in Google Colab.
 2. Run the first cell: it clones this repository and adds `src/` to the Python path.
 3. Run the data download cell and upload your `kaggle.json` (Kaggle → Settings → API → Create New Token). You must have joined the competition and accepted its rules first.
@@ -55,7 +56,7 @@ Kaggle submissions are made from `kaggle/submit_baseline.py`; instructions are a
 GROUP10_CENG313/
 ├── README.md
 ├── assignment1_eda_baseline.ipynb
-├── assignment2_solution.ipynb
+├── assignment2_solution.ipynb   # added in Assignment 2
 ├── src/
 │   ├── data.py      # loading and preprocessing tomograms
 │   ├── models.py    # baseline and proposed models
