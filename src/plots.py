@@ -7,6 +7,7 @@ Keep each figure in its own function so the notebook only calls it, e.g.
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def class_balance(tomos, ax=None):
@@ -75,5 +76,29 @@ def position_yx(labels, ax=None):
     ax.set_xlabel("x / tomogram size")
     ax.set_ylabel("y / tomogram size")
     ax.set_title("Motor positions, top view (normalized)")
+    ax.legend()
+    return ax
+
+
+def distances_to_mean(labels):
+    """Distance in Å from each motor to B1's prediction (mean normalized position scaled to its tomogram)."""
+    motors = normalized_positions(labels)
+    squared = 0
+    for axis in ["z", "y", "x"]:
+        predicted = motors[f"{axis}_norm"].mean() * motors[f"shape_{axis}"]   # B1's guess, in voxels
+        diff = (motors[axis] - predicted) * motors["voxel_spacing"]            # difference, in Å
+        squared = squared + diff ** 2
+    return np.sqrt(squared)
+
+
+def distance_to_mean_hist(labels, threshold=1000, ax=None):
+    """Histogram of motor distances to B1's prediction, with the 1000 Å threshold."""
+    ax = ax or plt.gca()
+    dist = distances_to_mean(labels)
+    ax.hist(dist, bins=40)
+    ax.axvline(threshold, color="red", linestyle="--", label=f"{threshold} Å threshold")
+    ax.set_xlabel("Distance to B1's prediction (Å)")
+    ax.set_ylabel("Number of motors")
+    ax.set_title("How far is each motor from B1's prediction?")
     ax.legend()
     return ax
