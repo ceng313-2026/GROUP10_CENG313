@@ -98,3 +98,33 @@ def load_tomogram(tomo_dir, z_step=1, scale=1.0):
                 img = img.resize(new_size, Image.BILINEAR)
             volume.append(np.asarray(img, dtype=np.uint8))
     return np.stack(volume)
+
+
+def downsample_tomogram(tomo_dir, factor=8):
+    """Shrink a tomogram by `factor` along all three axes using block averaging.
+
+    Every group of `factor` consecutive slices is averaged in z, and each slice is
+    reduced by `factor` in y and x (Image.reduce averages factor x factor blocks).
+    Averaging, instead of skipping slices, also lowers the noise of the tomogram.
+    Because the factor is the same on every axis, a voxel stays a cube and
+    original coordinates map to small ones by simple division: z_small = z / factor.
+
+    Returns a uint8 array of shape (Z // factor, Y // factor, X // factor).
+    """
+    slices = list_slices(tomo_dir)
+    n_blocks = len(slices) // factor
+    blocks = []
+    for b in range(n_blocks):
+        acc = None
+        for path in slices[b * factor:(b + 1) * factor]:
+            with Image.open(path) as img:
+                small = np.asarray(img.convert("L").reduce(factor), dtype=np.float32)
+            acc = small if acc is None else acc + small
+        blocks.append(acc / factor)
+    return np.clip(np.rint(np.stack(blocks)), 0, 255).astype(np.uint8)
+
+
+def load_downsampled(npz_path):
+    """Read one file written by kaggle/downsample_train.py."""
+    with np.load(npz_path) as f:
+        return f["volume"], {k: f[k].item() for k in f.files if k != "volume"}
