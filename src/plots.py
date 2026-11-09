@@ -40,3 +40,23 @@ def tomogram_sizes(tomos):
         ax.set_ylabel("Number of tomograms")
     fig.tight_layout()
     return fig
+
+def normalized_positions(labels):
+    """Motors only, with positions divided by tomogram size (0 = first voxel, 1 = last)."""
+    motors = labels[labels["has_motor"]].copy()
+    for axis in ["z", "y", "x"]:
+        motors[f"{axis}_norm"] = motors[axis] / motors[f"shape_{axis}"]
+    return motors
+
+
+def position_histograms(labels):
+    """Histograms of normalized motor positions along z, y and x."""
+    motors = normalized_positions(labels)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    for ax, axis in zip(axes, ["z", "y", "x"]):
+        ax.hist(motors[f"{axis}_norm"], bins=20, range=(0, 1))
+        ax.set_title(f"{axis} (normalized)")
+        ax.set_xlabel("Position / tomogram size")
+        ax.set_ylabel("Number of motors")
+    fig.tight_layout()
+    return fig
