@@ -56,15 +56,15 @@ class MeanPositionBaseline:
 # ---------------------------------------------------------------------------
 
 def normalize_volume(vol):
-    """Zero mean, unit variance per tomogram, so brightness differences between
-    tomograms do not matter to the classifier."""
+    """Make mean 0 and std 1 for one tomogram.
+    Some tomograms are brighter than others, this removes that difference."""
     vol = vol.astype(np.float32)
     return (vol - vol.mean()) / (vol.std() + 1e-6)
 
 
 def patch_at(vol, z, y, x, size):
-    """2D patch of shape (size, size) centered at (z, y, x) in a downsampled volume,
-    or None if it does not fit inside the volume."""
+    """Cut a 2D square (size x size) with center (z, y, x) from the small volume.
+    Returns None if the square goes outside the volume."""
     h = size // 2
     if not (0 <= z < vol.shape[0] and h <= y <= vol.shape[1] - (size - h)
             and h <= x <= vol.shape[2] - (size - h)):
@@ -74,14 +74,15 @@ def patch_at(vol, z, y, x, size):
 
 def extract_training_patches(labels, volume_dir, size=16, neg_per_tomo=30,
                              neg_min_dist_angstrom=2000.0, seed=0):
-    """Build the B2 training set from the downsampled volumes.
+    """Make the B2 training data from the small volumes.
 
-    Positives: patches centered on each motor, on its slice and the two neighbouring
-    slices, plus 1-pixel shifts (data augmentation, motors are rare).
-    Negatives: random patches from every tomogram whose center is farther than
-    neg_min_dist_angstrom from all motors of that tomogram.
+    Positive patches: around each motor, on its slice and the slices above and below.
+    We also move the patch 1 pixel up/down/left/right to get more motor examples
+    (we have few motors).
+    Negative patches: random places in each tomogram that are more than
+    neg_min_dist_angstrom away from all motors.
 
-    Returns X (n, size*size) and y (n,) with 1 = motor, 0 = background.
+    Returns X with shape (n, size*size) and y with shape (n,), 1 = motor, 0 = no motor.
     """
     rng = np.random.default_rng(seed)
     X, y = [], []
@@ -90,7 +91,7 @@ def extract_training_patches(labels, volume_dir, size=16, neg_per_tomo=30,
         vol = normalize_volume(vol)
         factor = meta["factor"]
         motors = group[group["z"] >= 0][["z", "y", "x"]].to_numpy(dtype=float) / factor
-        spacing_small = meta["voxel_spacing"] * factor          # Angstrom per small voxel
+        spacing_small = meta["voxel_spacing"] * factor          # Angstrom for one small voxel
 
         # positives
         for mz, my, mx in np.round(motors).astype(int):
@@ -120,24 +121,24 @@ def extract_training_patches(labels, volume_dir, size=16, neg_per_tomo=30,
 
 
 class PatchClassifierBaseline:
-    """B2: a classical classifier (e.g. Logistic Regression, Random Forest) decides
-    "motor / no motor" for small 2D patches; a sliding window over the downsampled
-    volume finds the most motor-like position.
+    """B2: a simple classifier (for example Logistic Regression or Random Forest)
+    says "motor / no motor" for small 2D patches. We slide a window over the small
+    volume and take the place with the highest motor probability.
 
-    Three things make the window search work in practice (see notebook, Block 5.4):
-    - hard negative mining: after a first fit, the most motor-like windows far away
-      from real motors in the TRAINING tomograms are added as negatives and the model
-      is refit, so it learns the background structures it confuses with motors;
-    - margin: the outer part of each axis (artefacts near the volume border) is not searched;
-    - smoothing: the probability map is averaged over neighbouring windows, so a motor
-      that looks like a motor on several slices beats a single noisy window;
-    - refinement: around the best coarse window, every slice and every pixel shift
-      within one grid step is scored, so the position is not limited to the coarse grid.
+    The first version did not work well (see notebook, Block 5.4), so we added:
+    - hard negatives: after the first training, we run the model on the TRAIN
+      tomograms, take places far from real motors where the model still says
+      "motor", add them as negatives and train again;
+    - margin: we do not search the outer part of the volume (many wrong
+      predictions were near the border);
+    - smoothing: we average the probability with the nearby windows, so one
+      noisy window does not win;
+    - refine: around the best window we check every slice and every pixel,
+      because the first search only checks every 4th pixel and every 2nd slice.
 
-    predict() returns tomo_id, z, y, x in ORIGINAL voxel coordinates plus `prob`
-    (the best smoothed window probability). Use with_threshold() to turn
-    low-probability predictions into "no motor" (-1), so the threshold can be
-    tuned without running the sliding window again.
+    predict() returns tomo_id, z, y, x in ORIGINAL voxel coordinates and `prob`.
+    with_threshold() changes low-probability rows to "no motor" (-1), so we can
+    try many thresholds without running the sliding window again.
     """
 
     def __init__(self, classifier, volume_dir, size=16, stride=4, z_step=2,
@@ -153,10 +154,10 @@ class PatchClassifierBaseline:
 
     # --- sliding window -----------------------------------------------------
     def prob_map(self, vol):
-        """Motor probability for every window of a (normalized) volume.
+        """Motor probability for every window of a normalized volume.
 
-        Returns prob (nz, ny, nx) and the window centers (zc, yc, xc) in downsampled
-        coordinates. All windows are scored in one predict_proba call."""
+        Returns prob with shape (nz, ny, nx) and the window centers (zc, yc, xc)
+        in small-volume coordinates. We call predict_proba only once (faster)."""
         s, st = self.size, self.stride
         zc = np.arange(0, vol.shape[0], self.z_step)
         win = sliding_window_view(vol[zc], (s, s), axis=(1, 2))[:, ::st, ::st]  # (nz, ny, nx, s, s)
@@ -167,13 +168,13 @@ class PatchClassifierBaseline:
         return prob.reshape(nz, ny, nx), (zc, yc, xc)
 
     def _inside(self, shape, centers):
-        """Boolean grid: True for windows whose center is outside the border margin."""
+        """True for windows that are not in the border margin."""
         keep = [(c >= self.margin * n) & (c < (1 - self.margin) * n)
                 for c, n in zip(centers, shape)]
         return keep[0][:, None, None] & keep[1][None, :, None] & keep[2][None, None, :]
 
     def locate(self, vol):
-        """Best window center (z, y, x) in downsampled coordinates and its probability."""
+        """Best window center (z, y, x) in small-volume coordinates and its probability."""
         prob, (zc, yc, xc) = self.prob_map(vol)
         if self.smooth > 1:
             prob = uniform_filter(prob, size=self.smooth, mode="nearest")
@@ -182,11 +183,11 @@ class PatchClassifierBaseline:
         best = (int(zc[k]), int(yc[i]), int(xc[j]))
         if self.refine:
             best = self._refine(vol, best)
-        # the coarse (smoothed) probability is kept, so thresholds mean the same with or without refine
+        # we keep the probability from the first search, so the threshold works the same with refine
         return best, float(prob[k, i, j])
 
     def _refine(self, vol, center):
-        """Fine search (step 1 in every axis) within one coarse grid step around center."""
+        """Check every pixel and slice near the best window (one grid step around it)."""
         s, h = self.size, self.size // 2
         z0, y0, x0 = center
         zs = np.arange(max(z0 - self.z_step, 0), min(z0 + self.z_step, vol.shape[0] - 1) + 1)
@@ -202,7 +203,7 @@ class PatchClassifierBaseline:
 
     # --- training -----------------------------------------------------------
     def _hard_negatives(self, labels):
-        """Most motor-like windows far from every real motor, from the training tomograms."""
+        """Places in the train tomograms where the model says "motor" but there is no motor near."""
         X = []
         for tomo_id, group in labels.groupby("tomo_id"):
             vol, meta = data.load_downsampled(self.volume_dir / f"{tomo_id}.npz")
@@ -220,7 +221,7 @@ class PatchClassifierBaseline:
                 if len(motors) and (np.linalg.norm(motors - c, axis=1).min()
                                     * meta["voxel_spacing"] * f < self.neg_min_dist):
                     continue
-                # skip windows right next to one already picked (same structure)
+                # skip windows very close to one we already took (it is the same thing)
                 if any(np.abs(c - q).max() <= 2 * self.stride for q in picked):
                     continue
                 picked.append(c)
@@ -247,14 +248,14 @@ class PatchClassifierBaseline:
             vol, meta = data.load_downsampled(self.volume_dir / f"{tomo_id}.npz")
             (z, y, x), p = self.locate(normalize_volume(vol))
             f = meta["factor"]
-            # center of the 8x8x8 block back in original voxels
+            # small coordinate * 8 + 4 = center of the 8x8x8 block in original voxels
             rows.append({"tomo_id": tomo_id, "z": int(z * f + f // 2),
                          "y": int(y * f + f // 2), "x": int(x * f + f // 2), "prob": p})
         return pd.DataFrame(rows)
 
 
 def with_threshold(predictions, threshold):
-    """Predictions below the probability threshold become "no motor" (-1)."""
+    """If prob is lower than the threshold, the prediction becomes "no motor" (-1)."""
     out = predictions.copy()
     low = out["prob"] < threshold
     out.loc[low, ["z", "y", "x"]] = -1
