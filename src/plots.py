@@ -60,3 +60,20 @@ def position_histograms(labels):
         ax.set_ylabel("Number of motors")
     fig.tight_layout()
     return fig
+
+
+def position_yx(labels, ax=None):
+    """Top view: normalized motor positions in the y-x plane, with B1's mean position."""
+    ax = ax or plt.gca()
+    motors = normalized_positions(labels)
+    ax.scatter(motors["x_norm"], motors["y_norm"], s=10, alpha=0.5, label="motors")
+    ax.scatter(motors["x_norm"].mean(), motors["y_norm"].mean(),
+               color="red", marker="x", s=150, label="mean position (B1 prediction)")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.set_xlabel("x / tomogram size")
+    ax.set_ylabel("y / tomogram size")
+    ax.set_title("Motor positions, top view (normalized)")
+    ax.legend()
+    return ax
