@@ -30,20 +30,20 @@ The raw data does not fit in Colab, so `kaggle/downsample_train.py` shrinks ever
 
 The script ran on Kaggle (CPU) in about 20 minutes and produced **0.35 GB**, published as the private Kaggle Dataset [`yasunl/group10-byu-downsampled-8x`](https://www.kaggle.com/datasets/yasunl/group10-byu-downsampled-8x):
 
-| File | Content |
-| --- | --- |
-| `downsampled/<tomo_id>.npz` | `volume` (uint8, Z/8 x Y/8 x X/8) plus `orig_z`, `orig_y`, `orig_x`, `voxel_spacing`, `factor`. Read with `src.data.load_downsampled()` |
-| `labels_downsampled.csv` | `train_labels.csv` plus `z_s`, `y_s`, `x_s`: motor coordinates in the small volume (-1 = no motor) |
-| `examples/<tomo_id>.npz` | Full-resolution motor slice and 9-slice crops around the motor for 12 tomograms with a motor; middle slice of 4 tomograms without one (image EDA) |
+| File                        | Content                                                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `downsampled/<tomo_id>.npz` | `volume` (uint8, Z/8 x Y/8 x X/8) plus `orig_z`, `orig_y`, `orig_x`, `voxel_spacing`, `factor`. Read with `src.data.load_downsampled()`           |
+| `labels_downsampled.csv`    | `train_labels.csv` plus `z_s`, `y_s`, `x_s`: motor coordinates in the small volume (-1 = no motor)                                                |
+| `examples/<tomo_id>.npz`    | Full-resolution motor slice and 9-slice crops around the motor for 12 tomograms with a motor; middle slice of 4 tomograms without one (image EDA) |
 
 ## Approach
 
 ### Assignment 1: EDA and baselines
 
-| Baseline | Idea                                                                         |
-| -------- | ---------------------------------------------------------------------------- |
-| B0       | Always predict "no motor" (-1, -1, -1)                                       |
-| B1       | Always predict the mean normalized motor position from the training set      |
+| Baseline | Idea                                                                                                                                                                           |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B0       | Always predict "no motor" (-1, -1, -1)                                                                                                                                         |
+| B1       | Always predict the mean normalized motor position from the training set                                                                                                        |
 | B2       | Classical ML patch classifier (Random Forest) on the downsampled volumes; a sliding window picks the most likely location. Threshold 0 was best, so B2 always predicts a motor |
 
 ### Assignment 2: Proposed solution
@@ -62,11 +62,11 @@ Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kag
 
 ## Kaggle submission history
 
-| Date       | Method                       | Public score | Private score | Notes                                                                          |
-| ---------- | ---------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------ |
-| 2026-11-02 | B1: mean normalized position | 0.01043      | 0.00801       | Every tomogram predicted as positive; almost no prediction falls within 1000 Å |
-| 2026-11-09 | B2: patch classifier (Random Forest) + sliding window | 0.10245 | 0.07515 | Trained on all 648 tomograms; always predicts a motor |
-| 2026-11-10 | B0: always no motor | 0.00000 | 0.00000 | Lower bound |
+| Date       | Method                                                | Public score | Private score | Notes                                                                          |
+| ---------- | ----------------------------------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------ |
+| 2026-11-02 | B1: mean normalized position                          | 0.01043      | 0.00801       | Every tomogram predicted as positive; almost no prediction falls within 1000 Å |
+| 2026-11-09 | B2: patch classifier (Random Forest) + sliding window | 0.10245      | 0.07515       | Trained on all 648 tomograms; always predicts a motor                          |
+| 2026-11-10 | B0: always no motor                                   | 0.00000      | 0.00000       | Lower bound                                                                    |
 
 ## How to run
 
@@ -102,24 +102,24 @@ GROUP10_CENG313/
 
 ## Team
 
-| Name       | Student ID | GitHub |
-| ---------- | ---------- | ------ |
-| Yasin Ünal |            | yasunl |
+| Name                    | Student ID  | GitHub                |
+| ----------------------- | ----------- | --------------------- |
+| Yasin Ünal              | 23118080001 | yasunl                |
 | Abdullah Kaan Yurtseven | 23118080027 | AbdullahKaanYurtseven |
-| Salih      |23118080016 | ozcamm |
+| Salih Özçam             | 23118080016 | ozcamm                |
 
 ## Progress log
 
-| Date       | Member | Work                                                                |
-| ---------- | ------ | ------------------------------------------------------------------- |
-| 2026-11-02 | Yasin  | Repository created, initial project structure                       |
-| 2026-11-02 | Yasin  | First Kaggle late submission (B1); fixed data folder path on Kaggle |
-| 2026-11-04 | All    | Tasks split: Yasin data and integration, Kaan EDA, Salih baselines  |
-| 2026-11-08 | Yasin  | Downsampled all 648 training tomograms 8x on Kaggle, published the private dataset |
-| 2026-11-08 | Salih  | F2 metric test, validation split saved (`splits/val_ids.csv`), B0/B1 validation scores |
-| 2026-11-09 | Yasin  | Notebook downloads the downsampled dataset; README dataset section  |
+| Date       | Member | Work                                                                                                 |
+| ---------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| 2026-11-02 | Yasin  | Repository created, initial project structure                                                        |
+| 2026-11-02 | Yasin  | First Kaggle late submission (B1); fixed data folder path on Kaggle                                  |
+| 2026-11-04 | All    | Tasks split: Yasin data and integration, Kaan EDA, Salih baselines                                   |
+| 2026-11-08 | Yasin  | Downsampled all 648 training tomograms 8x on Kaggle, published the private dataset                   |
+| 2026-11-08 | Salih  | F2 metric test, validation split saved (`splits/val_ids.csv`), B0/B1 validation scores               |
+| 2026-11-09 | Yasin  | Notebook downloads the downsampled dataset; README dataset section                                   |
 | 2026-11-09 | Salih  | B2 patch classifier + sliding window (`src/models.py`), B2 Kaggle submission (`kaggle/submit_b2.py`) |
-| 2026-11-09 | Kaan   | EDA sections 1–4: problem, data description, metadata and motor location EDA (`src/plots.py`) |
-| 2026-11-10 | Salih  | Baseline notebook (`notebooks/drafts/salih_baseline.ipynb`), results in README |
-| 2026-11-10 | Kaan   | Image EDA (full resolution vs 8x downsampled), summary of observations |
-| 2026-11-11 | Yasin  | Merged all work into `assignment1_eda_baseline.ipynb`, README and requirements completed |
+| 2026-11-09 | Kaan   | EDA sections 1–4: problem, data description, metadata and motor location EDA (`src/plots.py`)        |
+| 2026-11-10 | Salih  | Baseline notebook (`notebooks/drafts/salih_baseline.ipynb`), results in README                       |
+| 2026-11-10 | Kaan   | Image EDA (full resolution vs 8x downsampled), summary of observations                               |
+| 2026-11-11 | Yasin  | Merged all work into `assignment1_eda_baseline.ipynb`, README and requirements completed             |
