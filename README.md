@@ -37,7 +37,7 @@ The script ran on Kaggle (CPU) in about 20 minutes and produced **0.35 GB**, pub
 | -------- | ---------------------------------------------------------------------------- |
 | B0       | Always predict "no motor" (-1, -1, -1)                                       |
 | B1       | Always predict the mean normalized motor position from the training set      |
-| B2       | Classical ML patch classifier on the downsampled volumes; a sliding window picks the most likely location, a threshold decides "no motor" |
+| B2       | Classical ML patch classifier (Random Forest) on the downsampled volumes; a sliding window picks the most likely location. Threshold 0 was best, so B2 always predicts a motor |
 
 ### Assignment 2: Proposed solution
 
@@ -47,15 +47,19 @@ _TODO_
 
 | Model | Validation F2 | Kaggle public | Kaggle private |
 | ----- | ------------- | ------------- | -------------- |
-| B0    |               |               |                |
-| B1    |               | 0.01043       | 0.00801        |
-| B2    |               |               |                |
+| B0    | 0.0000        | 0.00000       | 0.00000        |
+| B1    | 0.0426        | 0.01043       | 0.00801        |
+| B2    | 0.2582        | 0.10245       | 0.07515        |
+
+Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kaggle, the models are trained on all 648 train tomograms. Details: `notebooks/drafts/salih_baseline.ipynb`.
 
 ## Kaggle submission history
 
 | Date       | Method                       | Public score | Private score | Notes                                                                          |
 | ---------- | ---------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------ |
 | 2026-11-02 | B1: mean normalized position | 0.01043      | 0.00801       | Every tomogram predicted as positive; almost no prediction falls within 1000 Å |
+| 2026-11-09 | B2: patch classifier (Random Forest) + sliding window | 0.10245 | 0.07515 | Trained on all 648 tomograms; always predicts a motor |
+| 2026-11-10 | B0: always no motor | 0.00000 | 0.00000 | Lower bound |
 
 ## How to run
 
@@ -65,7 +69,7 @@ _TODO_
 3. Run the data download cell and upload your `kaggle.json` (Kaggle → Settings → API → Create New Token). It downloads our downsampled dataset `yasunl/group10-byu-downsampled-8x` (0.35 GB); your Kaggle account needs access to it.
 4. Run the remaining cells top to bottom.
 
-Scripts in `kaggle/` run as Kaggle notebooks, with instructions at the top of each file: `downsample_train.py` builds the downsampled dataset, `submit_baseline.py` makes the B0/B1 submissions.
+Scripts in `kaggle/` run as Kaggle notebooks, with instructions at the top of each file: `downsample_train.py` builds the downsampled dataset, `submit_baseline.py` makes the B0/B1 submissions, `submit_b2.py` makes the B2 submission (it also needs our downsampled dataset as input).
 
 ## Repository structure
 
@@ -89,7 +93,7 @@ GROUP10_CENG313/
 | ---------- | ---------- | ------ |
 | Yasin Ünal |            | yasunl |
 | Kaan       |            |        |
-| Salih      |            |        |
+| Salih      |23118080016 | ozcamm |
 
 ## Progress log
 
@@ -99,4 +103,7 @@ GROUP10_CENG313/
 | 2026-11-02 | Yasin  | First Kaggle late submission (B1); fixed data folder path on Kaggle |
 | 2026-11-04 | All    | Tasks split: Yasin data and integration, Kaan EDA, Salih baselines  |
 | 2026-11-08 | Yasin  | Downsampled all 648 training tomograms 8x on Kaggle, published the private dataset |
+| 2026-11-08 | Salih  | F2 metric test, validation split saved (`splits/val_ids.csv`), B0/B1 validation scores |
 | 2026-11-09 | Yasin  | Notebook downloads the downsampled dataset; README dataset section  |
+| 2026-11-09 | Salih  | B2 patch classifier + sliding window (`src/models.py`), B2 Kaggle submission (`kaggle/submit_b2.py`) |
+| 2026-11-10 | Salih  | Baseline notebook (`notebooks/drafts/salih_baseline.ipynb`), results in README |
