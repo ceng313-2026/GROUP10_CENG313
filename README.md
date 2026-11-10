@@ -15,7 +15,14 @@ CENG313 Introduction to Data Science (Gazi University), group project.
 - **648 training tomograms**, each stored as a folder of 2D JPEG slices along z (`train/<tomo_id>/slice_XXXX.jpg`), about 70 GB in total.
 - `train_labels.csv`: one row per motor with the motor center (`Motor axis 0/1/2` = z, y, x in voxels), the tomogram shape, the voxel spacing (Å per voxel) and the number of motors. Tomograms without a motor appear once with coordinates -1.
 - The test set is hidden; Kaggle re-runs the submission notebook on it.
-- _TODO (EDA): positive/negative split, shape and voxel spacing ranges, key findings._
+- 362 of the 648 tomograms (56%) contain at least one motor, 286 contain none; 313 contain exactly one motor, 49 contain 2–10. The label file has 451 motor coordinates (`Number of motors` sums to 455, so 4 motors are counted but not labelled).
+- Voxel spacing takes 10 values between 6.5 and 19.7 Å, so the 1000 Å threshold is 51–154 voxels. Sizes: 300–800 slices in z, 924–1912 voxels in y and x.
+
+### Key EDA findings (notebook sections 2–7)
+
+- Motors cluster around the middle in z but are spread over most of the y–x plane; a fixed guess is within 1000 Å of only 9 of 451 motors (median distance ≈ 4,250 Å). This is why B1 scores ≈ 0.01.
+- Motors look different from tomogram to tomogram, and slice brightness does not separate tomograms with and without a motor, so a model has to learn local shape.
+- After 8x downsampling the cell edge and the flagellum are still visible and 1000 Å is still about 8 voxels, so the downsampled data is fine enough for B2.
 
 ### Downsampled data (our preprocessing)
 
@@ -51,7 +58,7 @@ _TODO_
 | B1    | 0.0426        | 0.01043       | 0.00801        |
 | B2    | 0.2582        | 0.10245       | 0.07515        |
 
-Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kaggle, the models are trained on all 648 train tomograms. Details: `notebooks/drafts/salih_baseline.ipynb`.
+Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kaggle, the models are trained on all 648 train tomograms. Details: `assignment1_eda_baseline.ipynb`, sections 8–11 (working version: `notebooks/drafts/salih_baseline.ipynb`).
 
 ## Kaggle submission history
 
@@ -67,7 +74,7 @@ Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kag
 1. Open `assignment1_eda_baseline.ipynb` in Google Colab.
 2. Run the first cell: it clones this repository and adds `src/` to the Python path.
 3. Run the data download cell and upload your `kaggle.json` (Kaggle → Settings → API → Create New Token). It downloads our downsampled dataset `yasunl/group10-byu-downsampled-8x` (0.35 GB); your Kaggle account needs access to it.
-4. Run the remaining cells top to bottom.
+4. Run the remaining cells top to bottom ("Run all" takes about 15 minutes on a Colab CPU, mostly training B2).
 
 Scripts in `kaggle/` run as Kaggle notebooks, with instructions at the top of each file: `downsample_train.py` builds the downsampled dataset, `submit_baseline.py` makes the B0/B1 submissions, `submit_b2.py` makes the B2 submission (it also needs our downsampled dataset as input).
 
@@ -76,15 +83,21 @@ Scripts in `kaggle/` run as Kaggle notebooks, with instructions at the top of ea
 ```
 GROUP10_CENG313/
 ├── README.md
-├── assignment1_eda_baseline.ipynb
-├── assignment2_solution.ipynb   # added in Assignment 2
+├── requirements.txt
+├── assignment1_eda_baseline.ipynb   # Assignment 1: EDA + baselines (run in Colab)
+├── assignment2_solution.ipynb       # added in Assignment 2
 ├── src/
-│   ├── data.py      # loading and preprocessing tomograms
-│   ├── models.py    # baseline and proposed models
+│   ├── data.py      # loading, downsampling and reading tomograms
 │   ├── plots.py     # EDA plotting helpers
-│   └── utils.py     # metric, validation split, coordinate conversion
-├── kaggle/          # scripts run as Kaggle notebooks (submissions, preprocessing)
-└── notebooks/drafts # personal working notebooks
+│   ├── utils.py     # F2 metric, validation split, coordinate conversion
+│   └── models.py    # baselines B0, B1, B2
+├── kaggle/          # scripts run as Kaggle notebooks
+│   ├── downsample_train.py   # builds the downsampled dataset
+│   ├── submit_baseline.py    # B0 / B1 submission
+│   └── submit_b2.py          # B2 submission
+├── splits/val_ids.csv        # fixed validation split (130 tomograms)
+├── tests/test_utils.py       # hand-checked test of the F2 metric
+└── notebooks/drafts/         # each member's working notebook (kaan_eda, salih_baseline)
 ```
 
 ## Team
@@ -92,7 +105,7 @@ GROUP10_CENG313/
 | Name       | Student ID | GitHub |
 | ---------- | ---------- | ------ |
 | Yasin Ünal |            | yasunl |
-| Kaan       |            |        |
+| Abdullah Kaan Yurtseven | 23118080027 | AbdullahKaanYurtseven |
 | Salih      |23118080016 | ozcamm |
 
 ## Progress log
@@ -106,4 +119,7 @@ GROUP10_CENG313/
 | 2026-11-08 | Salih  | F2 metric test, validation split saved (`splits/val_ids.csv`), B0/B1 validation scores |
 | 2026-11-09 | Yasin  | Notebook downloads the downsampled dataset; README dataset section  |
 | 2026-11-09 | Salih  | B2 patch classifier + sliding window (`src/models.py`), B2 Kaggle submission (`kaggle/submit_b2.py`) |
+| 2026-11-09 | Kaan   | EDA sections 1–4: problem, data description, metadata and motor location EDA (`src/plots.py`) |
 | 2026-11-10 | Salih  | Baseline notebook (`notebooks/drafts/salih_baseline.ipynb`), results in README |
+| 2026-11-10 | Kaan   | Image EDA (full resolution vs 8x downsampled), summary of observations |
+| 2026-11-11 | Yasin  | Merged all work into `assignment1_eda_baseline.ipynb`, README and requirements completed |
