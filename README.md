@@ -62,6 +62,12 @@ Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kag
 
 ## Kaggle submission history
 
+The competition is closed, so all scores are **late submissions** (public and private score, not placed on the leaderboard). B1 was submitted from Yasin's Kaggle account, B0 and B2 from Salih's, so there is one screenshot per account:
+
+| B1 (Yasin) | B0, B2 (Salih) |
+| --- | --- |
+| ![B1 late submission](submissions/kaggle_b1.png) | ![B0 and B2 late submissions](submissions/kaggle_b0_b2.png) |
+
 | Date       | Method                                                | Public score | Private score | Notes                                                                          |
 | ---------- | ----------------------------------------------------- | ------------ | ------------- | ------------------------------------------------------------------------------ |
 | 2026-11-02 | B1: mean normalized position                          | 0.01043      | 0.00801       | Every tomogram predicted as positive; almost no prediction falls within 1000 Å |
@@ -70,7 +76,7 @@ Validation: 518 train / 130 validation tomograms (`splits/val_ids.csv`). For Kag
 
 ## How to run
 
-1. Open `assignment1_eda_baseline.ipynb` in Google Colab: [open in Colab](https://colab.research.google.com/github/yasunl/GROUP10_CENG313/blob/main/assignment1_eda_baseline.ipynb) (or File → Open notebook → GitHub → `yasunl/GROUP10_CENG313`).
+1. Open `assignment1_eda_baseline.ipynb` in Google Colab: [open in Colab](https://colab.research.google.com/github/ceng313-2026/GROUP10_CENG313/blob/main/assignment1_eda_baseline.ipynb) (or File → Open notebook → GitHub → `ceng313-2026/GROUP10_CENG313`).
 2. Run the first cell: it clones this repository and adds `src/` to the Python path.
 3. Run the data download cell and upload your `kaggle.json` (Kaggle → Settings → API → Create New Token). It downloads our downsampled dataset `yasunl/group10-byu-downsampled-8x` (0.35 GB). The dataset is public, so any Kaggle account works.
 4. Run the remaining cells top to bottom ("Run all" takes about 15 minutes on a Colab CPU, mostly training B2).
@@ -84,7 +90,7 @@ GROUP10_CENG313/
 ├── README.md
 ├── requirements.txt
 ├── assignment1_eda_baseline.ipynb   # Assignment 1: EDA + baselines (run in Colab)
-├── assignment2_solution.ipynb       # added in Assignment 2
+├── assignment2_solution.ipynb       # Assignment 2 (due 30 December)
 ├── src/
 │   ├── data.py      # loading, downsampling and reading tomograms
 │   ├── plots.py     # EDA plotting helpers
@@ -96,6 +102,8 @@ GROUP10_CENG313/
 │   └── submit_b2.py          # B2 submission
 ├── splits/val_ids.csv        # fixed validation split (130 tomograms)
 ├── tests/test_utils.py       # hand-checked test of the F2 metric
+├── submissions/              # screenshots of our Kaggle submission scores
+├── data/                     # downloaded data, NOT committed (see .gitignore)
 └── notebooks/drafts/         # each member's working notebook (kaan_eda, salih_baseline)
 ```
 
@@ -123,3 +131,5 @@ GROUP10_CENG313/
 | 2026-11-10 | Kaan   | Image EDA (full resolution vs 8x downsampled), summary of observations                               |
 | 2026-11-11 | Yasin  | Merged all work into `assignment1_eda_baseline.ipynb`, README and requirements completed             |
 | 2026-11-11 | Yasin  | Repository and downsampled dataset made public; setup cell clones without a token                    |
+| 2026-11-11 | Yasin  | Moved the repository to the ceng313-2026 organization                                                |
+| 2026-11-11 | Yasin  | Notebook: data overview (3.1), preprocessing decisions (8), Kaggle submissions section; README links |
