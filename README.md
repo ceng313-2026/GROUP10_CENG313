@@ -74,6 +74,20 @@ The competition is closed, so all scores are **late submissions** (public and pr
 | 2026-11-09 | B2: patch classifier (Random Forest) + sliding window | 0.10245      | 0.07515       | Trained on all 648 tomograms; always predicts a motor                          |
 | 2026-11-10 | B0: always no motor                                   | 0.00000      | 0.00000       | Lower bound                                                                    |
 
+## Getting the data
+
+The data is not committed (`data/` is in `.gitignore`). You need a Kaggle account and an API token (`kaggle.json`: Kaggle → Settings → API → Create New Token).
+
+- **Downsampled data (used by the notebooks, 0.35 GB):** the notebook downloads it automatically. By hand:
+  ```bash
+  kaggle datasets download -d yasunl/group10-byu-downsampled-8x -p data --unzip
+  ```
+- **Raw competition data (about 70 GB, only needed to rebuild the downsampled data):** join the competition and accept its rules on the [competition page](https://www.kaggle.com/competitions/byu-locating-bacterial-flagellar-motors-2025), then
+  ```bash
+  kaggle competitions download -c byu-locating-bacterial-flagellar-motors-2025 -p data
+  ```
+  `kaggle/downsample_train.py` builds the downsampled dataset from it (run on Kaggle, about 20 minutes on CPU).
+
 ## How to run
 
 1. Open `assignment1_eda_baseline.ipynb` in Google Colab: [open in Colab](https://colab.research.google.com/github/ceng313-2026/GROUP10_CENG313/blob/main/assignment1_eda_baseline.ipynb) (or File → Open notebook → GitHub → `ceng313-2026/GROUP10_CENG313`).
@@ -90,7 +104,7 @@ GROUP10_CENG313/
 ├── README.md
 ├── requirements.txt
 ├── assignment1_eda_baseline.ipynb   # Assignment 1: EDA + baselines (run in Colab)
-├── assignment2_solution.ipynb       # Assignment 2 (due 30 December)
+├── assignment2_solution.ipynb       # Assignment 2 (due 30 December, placeholder for now)
 ├── src/
 │   ├── data.py      # loading, downsampling and reading tomograms
 │   ├── plots.py     # EDA plotting helpers
